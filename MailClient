@@ -1,0 +1,76 @@
+import socket
+from socket import AF_INET, SOCK_STREAM   
+import base64
+msg = "\r\n I love computer networks!"
+endmsg = "\r\n.\r\n"
+
+# Choose a mail server (e.g. Google mail server) and call it mailserver mailserver = #Fill in start #Fill in end
+mailserver = ("mail.smtp2go.com", 8025)
+
+# Create socket called clientSocket and establish a TCP connection with mailserver
+clientSocket = socket.socket(AF_INET, SOCK_STREAM)
+clientSocket.connect(mailserver)
+recv = clientSocket.recv(1024) #.decode()
+print("Message after connection request:" +recv)
+if recv[:3] != '220':
+  print('220 reply not received from server.')
+
+# Send HELO command and print server response. heloCommand = 'HELO Alice\r\n' clientSocket.send(heloCommand.encode())
+heloCommand = 'EHLO Alice\r\n'
+clientSocket.send(heloCommand.encode())
+recv1 = clientSocket.recv(1024)#.decode()
+print(recv1)
+if recv1[:3] != '250':
+    print(' the 250 reply not received from server.')
+
+username = "abcd.sjsu.edu"
+password = "abcd"
+base64_str = ("\x00"+username+"\x00"+password).encode()
+base64_str = base64.b64encode(base64_str)
+authMsg = "AUTH PLAIN ".encode()+base64_str+"\r\n".encode()
+clientSocket.send(authMsg)
+recv_auth = clientSocket.recv(1024)
+print(recv_auth.decode())
+if recv1[:3] != '250':
+    print('A 250 reply not received from server.')
+
+# Send MAIL FROM command and print server response.
+mailFrom = "MAIL FROM: <sendingemail@gmail.com> \r\n"
+clientSocket.send(mailFrom.encode())
+recv2 = clientSocket.recv(1024)
+print("After MAIL FROM command: "+recv2)
+if recv1[:3] != '250':
+    print('Server-250 reply not received from server.')
+
+# Send RCPT TO command and print server response.
+rcptTo = "RCPT TO: <receivingemail@gmail.com> \r\n"
+clientSocket.send(rcptTo.encode())
+recv3 = clientSocket.recv(1024)
+print("After RCPT TO command: "+recv3)
+if recv1[:3] != '250':
+    print('Not receive - 250 reply not received from server.')
+
+# Send DATA command and print server response.
+data = "DATA\r\n"
+clientSocket.send(data.encode())
+recv4 = clientSocket.recv(1024)
+print("After DATA command: "+recv4)
+if recv1[:3] != '250':
+    print('Message 250 reply not received from server.')
+
+# Send message data.
+subject = "Subject: Sending from SMTP mail client  \r\n\r\n" 
+clientSocket.send(subject.encode())
+clientSocket.send(msg.encode())
+# Message ends with a single period.
+clientSocket.send(endmsg.encode())
+recv_msg = clientSocket.recv(1024)
+print("Response after sending message body:"+recv_msg)
+if recv1[:3] != '250':
+    print('250 reply not received from server.')
+    
+# Send QUIT command and get server response.
+clientSocket.send("QUIT\r\n".encode())
+message=clientSocket.recv(1024)
+print (message)
+clientSocket.close()
